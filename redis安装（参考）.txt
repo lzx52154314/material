@@ -1,0 +1,58 @@
+﻿redis4.0.2 安装(/data 目录下)
+	(1).下载安装包
+		wget http://download.redis.io/releases/redis-4.0.2.tar.gz
+
+	(2).解压
+		tar -zxvf redis-4.0.2.tar.gz -C /data/modules
+		mv redis-4.0.2 redis
+		mkdir -p /data/redis/logs
+		mkdir -p /data/redis/data
+		mkdir -p /data/redis/sentinel
+	(3).编译
+		make MALLOC=libc
+		(可选)make test(如果报错提示You need tcl 8.5 or newer in order to run the Redis test 参考：http://blog.csdn.net/luyee2010/article/details/18766911)
+		make install
+	(4).redis-master配置
+		daemonize yes
+		#bind 127.0.0.1
+		protected-mode no
+		pidfile ar/run/redis-master.pid
+		port 6379
+		logfile "/data/redis/logs/master.log"
+		stop-writes-on-bgsave-error yes
+		dbfilename master-dump.rdb
+		dir /data/redis/data
+		appendonly no
+		appendfilename "appendonly-master.aof"
+		requirepass Redis4Fotile#2017
+		masterauth Redis4Fotile#2017
+		slave-read-only yes
+
+	(5).redis-slave配置
+		daemonize yes
+		#bind 127.0.0.1
+		protected-mode no
+		pidfile ar/run/redis-slave.pid
+		port 6379
+		logfile "/data/redis/logs/slave.log"
+		dbfilename slave-dump.rdb
+		dir /data/redis/data
+		slaveof redis-master的ip 6379
+		appendonly no
+		appendfilename "appendonly-slave.aof"
+		requirepass Redis4Fotile#2017
+		masterauth Redis4Fotile#2017
+		slave-read-only yes
+
+	(6)sentinel配置
+		port 26379
+		dir /data/redisntinel
+		protected-mode no
+		sentinel monitor master redis-master的ip 6379 1
+		sentinel down-after-milliseconds master 5000 
+		sentinel parallel-syncs master 1
+		sentinel failover-timeout master 5000
+		sentinel auth-pass master Redis4Fotile#2017
+	(7)启动
+	/data/redis/src/redis-server /data/redis/redis.conf
+	/data/redis/src/redis-sentinel /data/redis/sentinel.conf
